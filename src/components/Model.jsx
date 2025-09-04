@@ -24,8 +24,8 @@ const Model = () => {
   const cameraControlLarge = useRef();
 
   // model
-  const small = useRef(new THREE.Group());
-  const large = useRef(new THREE.Group());
+  const small = useRef(typeof window !== "undefined" ? new THREE.Group() : null);
+  const large = useRef(typeof window !== "undefined" ? new THREE.Group() : null);
 
   const [eventSource, setEventSource] = useState(null);
 
@@ -54,9 +54,11 @@ const Model = () => {
   }, [size]);
 
   useEffect(() => {
-    const rootElement = document.getElementById("root");
-    if (rootElement) {
-      setEventSource(rootElement);
+    if (typeof document !== "undefined") {
+      const rootElement = document.getElementById("root");
+      if (rootElement) {
+        setEventSource(rootElement);
+      }
     }
   }, []);
 
@@ -68,39 +70,45 @@ const Model = () => {
         </h1>
         <div className="flex flex-col items-center mt-5">
           <div className="w-full h-[75vh] md:h-[90vh] overflow-hidden relative ">
-            <ModelView
-              index={1}
-              groupRef={small}
-              gsapType="view1"
-              controlRef={cameraControlSmall}
-              setRotationState={setSmallRotation}
-              item={model}
-              size={size}
-            />
+            {typeof window !== "undefined" && (
+              <>
+                <ModelView
+                  index={1}
+                  groupRef={small}
+                  gsapType="view1"
+                  controlRef={cameraControlSmall}
+                  setRotationState={setSmallRotation}
+                  item={model}
+                  size={size}
+                />
 
-            <ModelView
-              index={2}
-              groupRef={large}
-              gsapType="view2"
-              controlRef={cameraControlLarge}
-              setRotationState={setLargeRotation}
-              item={model}
-              size={size}
-            />
+                <ModelView
+                  index={2}
+                  groupRef={large}
+                  gsapType="view2"
+                  controlRef={cameraControlLarge}
+                  setRotationState={setLargeRotation}
+                  item={model}
+                  size={size}
+                />
+              </>
+            )}
 
-            <Canvas
-              style={{
-                position: "fixed",
-                top: 0,
-                bottom: 0,
-                left: 0,
-                right: 0,
-                overflow: "hidden",
-              }}
-              eventSource={eventSource}
-            >
-              <View.Port />
-            </Canvas>
+            {typeof window !== "undefined" && (
+              <Canvas
+                style={{
+                  position: "fixed",
+                  top: 0,
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  overflow: "hidden",
+                }}
+                eventSource={eventSource}
+              >
+                <View.Port />
+              </Canvas>
+            )}
             
           </div>
           <div className="mx-auto w-full ">

@@ -4,12 +4,14 @@ import { useGSAP } from "@gsap/react";
 import { heroVideo, smallHeroVideo } from "../utils";
 
 const Hero = () => {
-  const [videoSrc, setVideoSrc] = useState("");
+  const [videoSrc, setVideoSrc] = useState(heroVideo); // Default to heroVideo
 
   // Function to update the video source based on the window width
   const updateVideoSrc = () => {
-    const isSmallScreen = window.innerWidth < 760;
-    setVideoSrc(isSmallScreen ? smallHeroVideo : heroVideo);
+    if (typeof window !== "undefined") {
+      const isSmallScreen = window.innerWidth < 760;
+      setVideoSrc(isSmallScreen ? smallHeroVideo : heroVideo);
+    }
   };
 
   useEffect(() => {
@@ -17,12 +19,14 @@ const Hero = () => {
     updateVideoSrc();
 
     // Add a resize event listener
-    window.addEventListener("resize", updateVideoSrc);
+    if (typeof window !== "undefined") {
+      window.addEventListener("resize", updateVideoSrc);
 
-    // Clean up the event listener on component unmount
-    return () => {
-      window.removeEventListener("resize", updateVideoSrc);
-    };
+      // Clean up the event listener on component unmount
+      return () => {
+        window.removeEventListener("resize", updateVideoSrc);
+      };
+    }
   }, []); // Run once on mount
 
   useGSAP(() => {
