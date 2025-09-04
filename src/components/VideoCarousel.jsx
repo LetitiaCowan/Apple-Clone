@@ -11,16 +11,18 @@ if (typeof window !== "undefined") {
 }
 
 const VideoCarousel = () => {
-  const videoRef = useRef([]);
-  const videoSpanRef = useRef([]);
-  const videoDivRef = useRef([]);
+  // Refs to hold DOM elements
+  const videoRef = useRef([]); // References for each video element
+  const videoSpanRef = useRef([]); // References for span elements (progress bars)
+  const videoDivRef = useRef([]); // References for outer span containers
 
+  // State to manage video playback and UI states
   const [video, setVideo] = useState({
-    isEnd: false,
-    startPlay: false,
-    videoId: 0,
-    isLastVideo: false,
-    isPlaying: false,
+    isEnd: false, // Indicates if the current video has ended
+    startPlay: false, // Indicates if playback has started
+    videoId: 0, // Current video index
+    isLastVideo: false, // Indicates if the last video is reached
+    isPlaying: false, // Playback state
   });
 
   const [loadedData, setLoadedData] = useState([]);
@@ -29,9 +31,9 @@ const VideoCarousel = () => {
   useGSAP(() => {
     // slider animation to move the video out of the screen and bring the next video in
     gsap.to("#slider", {
-      transform: `translateX(${-100 * videoId}%)`,
+      transform: `translateX(${-100 * videoId}%)`, // Shift based on video index
       duration: 2,
-      ease: "power2.inOut", // show visualizer https://gsap.com/docs/v3/Eases
+      ease: "power2.inOut", // Smooth easing for transition
     });
 
     // video animation to play the video when it is in the view
@@ -43,23 +45,23 @@ const VideoCarousel = () => {
       onComplete: () => {
         setVideo((pre) => ({
           ...pre,
-          startPlay: true,
-          isPlaying: true,
+          startPlay: true, // mark playback as started
+          isPlaying: true, // mark playback at playing
         }));
       },
     });
-  }, [isEnd, videoId]);
+  }, [isEnd, videoId]); // Dependencies to reapply animation
 
   useEffect(() => {
-    // Ensure the first video is loaded and ready to play
-    const firstVideo = videoRef.current[videoId];
-    
-    if (firstVideo && startPlay) {
-      firstVideo
-        .play()
-        .catch((err) => console.error("Video play failed:", err));
+    const currentVideo = videoRef.current[videoId];
+    if (currentVideo) {
+      if (isPlaying) {
+        currentVideo.play().catch((err) => console.error("Play failed:", err));
+      } else {
+        currentVideo.pause();
+      }
     }
-  }, [startPlay, videoId]);
+  }, [isPlaying, videoId]);
 
   const handleLoadedMetaData = (i, e) => setLoadedData((pre) => [...pre, e]);
 
@@ -68,13 +70,15 @@ const VideoCarousel = () => {
     let span = videoSpanRef.current;
 
     if (span[videoId]) {
+      // GSAP animation for progress bar
       let anim = gsap.to(span[videoId], {
         onUpdate: () => {
           const progress = Math.ceil(anim.progress() * 100);
 
           if (progress != currentProgress) {
-            currentProgress = progress;
+            currentProgress = progress; // Update only if there's a change
 
+            // Adjust progress bar width dynamically
             gsap.to(videoDivRef.current[videoId], {
               width:
                 window.innerWidth < 760
@@ -92,6 +96,7 @@ const VideoCarousel = () => {
         },
 
         onComplete: () => {
+          // Reset progress bar styling when animation ends
           if (isPlaying) {
             gsap.to(videoDivRef.current[videoId], {
               width: "12px",
@@ -107,7 +112,7 @@ const VideoCarousel = () => {
         anim.restart();
       }
 
-      // update the progress bar
+      // Function to update animation progress based on video time
       const animUpdate = () => {
         anim.progress(
           videoRef.current[videoId].currentTime /
@@ -126,6 +131,7 @@ const VideoCarousel = () => {
   }, [videoId, startPlay]);
 
   useEffect(() => {
+    // Manage play/pause state based on video metadata and playback status
     if (loadedData.length > 3) {
       if (!isPlaying) {
         videoRef.current[videoId].pause();
@@ -138,19 +144,22 @@ const VideoCarousel = () => {
   const handleProcess = (type, i) => {
     switch (type) {
       case "video-end":
-        setVideo((pre) => ({ ...pre, isEnd: true, videoId: i + 1 }));
+        setVideo((pre) => ({ ...pre, isEnd: true, videoId: i + 1 })); // Move to the next video
         break;
 
       case "video-last":
-        setVideo((pre) => ({ ...pre, isLastVideo: true }));
+        setVideo((pre) => ({ ...pre, isLastVideo: true })); // Mark the last video
         break;
 
       case "video-reset":
-        setVideo((pre) => ({ ...pre, isLastVideo: false, videoId: 0 }));
+        setVideo((pre) => ({ ...pre, isLastVideo: false, videoId: 0 })); // Reset to the first video
         break;
 
-      case "play":
-        setVideo((pre) => ({ ...pre, isPlaying: !pre.isPlaying }));
+      case "toggle-play":
+        setVideo((prev) => ({
+          ...prev,
+          isPlaying: !prev.isPlaying, // Toggle play/pause state
+        }));
         break;
 
       default:
@@ -166,6 +175,10 @@ const VideoCarousel = () => {
             <div className="video-carousel_container">
               <div className="w-full h-full flex-center rounded-3xl overflow-hidden bg-black">
                 <video
+                  className={`${
+                    list.id === 2 && "translate-x-44"
+                  } pointer-events-none
+                  `}
                   id="video"
                   type="video/mp4"
                   playsInline={true}
@@ -224,9 +237,7 @@ const VideoCarousel = () => {
             onClick={
               isLastVideo
                 ? () => handleProcess("video-reset")
-                : !isPlaying
-                ? () => handleProcess("play")
-                : () => handleProcess("pause")
+                : () => handleProcess("toggle-play")
             }
           />
         </button>
